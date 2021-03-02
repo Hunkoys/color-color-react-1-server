@@ -52,7 +52,7 @@ const dataServer = {
   ],
 };
 
-app.get('s/api/data', (req, res) => {
+app.get('/api/data', (req, res) => {
   res.send(JSON.stringify(dataServer));
 });
 
