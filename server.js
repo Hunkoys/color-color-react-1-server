@@ -59,16 +59,11 @@ app.get('/api/data', (req, res) => {
   res.send(pack(openGames));
 });
 
-let negha;
+app.post('/api/join', (req, res) => {
+  const gameId = unpack(req.body);
+  console.log(`Joining: ${gameId}`);
 
-app.post('/api/bro', (req, res) => {
-  const contents = unpack(req.body);
-  console.log(contents);
-  negha = contents;
-});
-
-app.get('/api/bro', (req, res) => {
-  res.send(pack(negha));
+  res.send();
 });
 
 app.listen(2500);
