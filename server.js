@@ -18,44 +18,54 @@ app.get('/', function (req, res) {
   res.sendFile(path.join(public, 'index.html'));
 });
 
-const openGames = {
-  list: [
-    {
-      id: 'skaj1',
-      name: 'Maria',
-      boardSize: {
-        w: 15,
-        h: 15,
-      },
+const openGames = [
+  {
+    id: 'skaj1',
+    name: 'Maria',
+    boardSize: {
+      w: 15,
+      h: 15,
     },
-    {
-      id: 'hueq2',
-      name: 'John',
-      boardSize: {
-        w: 7,
-        h: 7,
-      },
+  },
+  {
+    id: 'hueq2',
+    name: 'John',
+    boardSize: {
+      w: 7,
+      h: 7,
     },
-    {
-      id: 'uihowr3',
-      name: 'Tanglo',
-      boardSize: {
-        w: 15,
-        h: 15,
-      },
+  },
+  {
+    id: 'uihowr3',
+    name: 'Tanglo',
+    boardSize: {
+      w: 15,
+      h: 15,
     },
-    {
-      id: '263hed4',
-      name: 'Brogodog',
-      boardSize: {
-        w: 21,
-        h: 21,
-      },
+  },
+  {
+    id: '263hed4',
+    name: 'Brogodog',
+    boardSize: {
+      w: 21,
+      h: 21,
     },
-  ],
-};
+  },
+];
 
-app.get('/api/data', (req, res) => {
+function createGame(details) {
+  details.id = 'hasd';
+  openGames.push(details);
+}
+
+app.post('/api/create-game', (req, res) => {
+  const details = unpack(req.body);
+  createGame(details);
+  console.log(details);
+  res.send();
+});
+
+app.get('/api/open-games', (req, res) => {
   res.send(pack(openGames));
 });
 
@@ -64,6 +74,15 @@ app.post('/api/join', (req, res) => {
   console.log(`Joining: ${gameId}`);
 
   res.send();
+});
+
+let bro;
+app.post('/bro', (req, res) => {
+  bro = unpack(req.body);
+  res.send();
+});
+app.get('/bro', (req, res) => {
+  res.send(pack(bro));
 });
 
 app.listen(2500);
