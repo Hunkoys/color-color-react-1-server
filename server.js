@@ -4,85 +4,64 @@ const path = require('path');
 const { unpack, pack } = require('./packer');
 const app = express();
 
-const public = path.join(__dirname, '../client/build');
+const publicPath = path.join(__dirname, '../client/build');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(express.static(public));
-
-app.get('/ping', function (req, res) {
-  return res.send('pong');
+app.use((req, res, next) => {
+  if (req.is('application/json')) res.locals.data = unpack(req.body);
+  res.locals.send = (data) => res.send(pack(data));
+  res.locals.send.status = (statusCode) => res.sendStatus(statusCode);
+  next();
 });
+app.use((req, res, next) => {
+  const cookieList = req.headers.cookie.split('; ');
+  res.locals.cookie = {};
+  cookieList.forEach((item) => {
+    const [key, value] = item.split('=');
+    res.locals.cookie[key] = value;
+  });
+  next();
+});
+
+app.use(express.static(publicPath));
 
 app.get('/', function (req, res) {
-  res.sendFile(path.join(public, 'index.html'));
+  const playerId = res.locals.cookie.playerId;
+  if (playerId === undefined)
+    res.cookie('playerId', Math.random().toString().substr(2, 6), { maxAge: 10800, httpOnly: false });
+  console.log(playerId);
+  res.sendFile(path.join(publicPath, 'index.html'));
 });
 
-const openGames = [
-  {
-    id: 'skaj1',
-    name: 'Maria',
-    boardSize: {
-      w: 15,
-      h: 15,
-    },
-  },
-  {
-    id: 'hueq2',
-    name: 'John',
-    boardSize: {
-      w: 7,
-      h: 7,
-    },
-  },
-  {
-    id: 'uihowr3',
-    name: 'Tanglo',
-    boardSize: {
-      w: 15,
-      h: 15,
-    },
-  },
-  {
-    id: '263hed4',
-    name: 'Brogodog',
-    boardSize: {
-      w: 21,
-      h: 21,
-    },
-  },
-];
+const games = {
+  all: [],
+  open: [],
+  full: [],
+  create: () => {},
+  destroy: () => {},
+  challenge: () => {},
+  reconnect: () => {},
+};
 
-function createGame(details) {
-  details.id = 'hasd';
-  openGames.push(details);
+function client(command, action) {
+  app.post(`/color-color/${command}`, (req, res, next) => {
+    const { data, send, cookie } = res.locals;
+    action(data, send, cookie, req, res, next);
+
+    if (res.headersSent === false) send();
+  });
 }
 
-app.post('/api/create-game', (req, res) => {
-  const details = unpack(req.body);
-  createGame(details);
-  console.log(details);
-  res.send();
-});
+client('index', (data, send, cookie) => {
+  let resObject = {};
 
-app.get('/api/open-games', (req, res) => {
-  res.send(pack(openGames));
-});
-
-app.post('/api/join', (req, res) => {
-  const gameId = unpack(req.body);
-  console.log(`Joining: ${gameId}`);
-
-  res.send();
-});
-
-let bro;
-app.post('/bro', (req, res) => {
-  bro = unpack(req.body);
-  res.send();
-});
-app.get('/bro', (req, res) => {
-  res.send(pack(bro));
+  const playerId = cookie.id;
+  if (playerId === undefined) resObject.id = Math.random().toString().substr(2, 5);
+  else {
+    resObject.inGame = false;
+  }
+  send(resObject);
 });
 
 app.listen(2500);
