@@ -1,7 +1,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-const { unpack, pack } = require('./packer');
+const idGen = require('./server/common/id');
+const { unpack, pack } = require('./server/packer');
+const cc = require('./server/color-color');
+
 const app = express();
 
 const publicPath = path.join(__dirname, '../client/build');
@@ -12,15 +15,25 @@ app.use((req, res, next) => {
   if (req.is('application/json')) res.locals.data = unpack(req.body);
   res.locals.send = (data) => res.send(pack(data));
   res.locals.send.status = (statusCode) => res.sendStatus(statusCode);
+  res.locals.send.error = (message) => {
+    res.sendStatus(500);
+  };
   next();
 });
 app.use((req, res, next) => {
-  const cookieList = req.headers.cookie.split('; ');
+  const cookieList = req.headers.cookie ? req.headers.cookie.split('; ') : [];
   res.locals.cookie = {};
   cookieList.forEach((item) => {
     const [key, value] = item.split('=');
     res.locals.cookie[key] = value;
   });
+
+  res.locals.setCookie = (entries) => {
+    Object.entries(entries).forEach(([name, value]) => {
+      res.locals.cookie[name] = value;
+      res.cookie(name, value, { maxAge: 9000000000 });
+    });
+  };
   next();
 });
 
@@ -34,34 +47,35 @@ app.get('/', function (req, res) {
   res.sendFile(path.join(publicPath, 'index.html'));
 });
 
-const games = {
-  all: [],
-  open: [],
-  full: [],
-  create: () => {},
-  destroy: () => {},
-  challenge: () => {},
-  reconnect: () => {},
-};
-
 function client(command, action) {
   app.post(`/color-color/${command}`, (req, res, next) => {
-    const { data, send, cookie } = res.locals;
-    action(data, send, cookie, req, res, next);
+    const { data, send, cookie, setCookie } = res.locals;
+    const playerHasId = cookie.id !== undefined;
+    console.log(cookie.id);
+    if (!playerHasId) setCookie({ id: idGen.create(6) });
+    const response = action({ data, send, cookie, req, res, next });
 
-    if (res.headersSent === false) send();
+    if (res.headersSent === false) send(response);
   });
 }
 
-client('index', (data, send, cookie) => {
-  let resObject = {};
+client('index', ({ cookie }) => {
+  const game = cc.getGame(cookie);
+  return game;
+});
 
-  const playerId = cookie.id;
-  if (playerId === undefined) resObject.id = Math.random().toString().substr(2, 5);
-  else {
-    resObject.inGame = false;
+client('create-game', ({ data, cookie }) => {
+  console.log(cc.games);
+  if (cc.inGame(cookie)) {
+    return;
   }
-  send(resObject);
+
+  const game = cc.createGame(data);
+  const host = cc.createPlayer(cookie);
+
+  game.host = host;
+
+  return game;
 });
 
 app.listen(2500);
