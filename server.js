@@ -1,4 +1,5 @@
 const express = require('express');
+const socket = require('socket.io')();
 const bodyParser = require('body-parser');
 const path = require('path');
 const idGen = require('./server/common/id');
@@ -51,7 +52,6 @@ function client(command, action) {
   app.post(`/color-color/${command}`, (req, res, next) => {
     const { data, send, cookie, setCookie } = res.locals;
     const playerHasId = cookie.id !== undefined;
-    console.log(cookie.id);
     if (!playerHasId) setCookie({ id: idGen.create(6) });
     const response = action({ data, send, cookie, req, res, next });
 
@@ -59,23 +59,24 @@ function client(command, action) {
   });
 }
 
-client('index', ({ cookie }) => {
-  const game = cc.getGame(cookie);
+client('index', ({ data, cookie }) => {
+  // const game = cc.getGameOf(cookie);
+  const game = cc.createGame(data, cookie);
   return game;
 });
 
 client('create-game', ({ data, cookie }) => {
-  console.log(cc.games);
   if (cc.inGame(cookie)) {
     return;
   }
 
-  const game = cc.createGame(data);
-  const host = cc.createPlayer(cookie);
-
-  game.host = host;
+  const game = cc.createGame(data, cookie);
 
   return game;
+});
+
+client('join', ({ gameId, cookie }) => {
+  return cc.joinGame(gameId, cookie);
 });
 
 app.listen(2500);

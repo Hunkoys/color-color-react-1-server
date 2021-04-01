@@ -5,7 +5,7 @@ class Board {
     this.size = size;
     this.colorTable = [];
     this.build();
-    if (nColors) this.colorize(nColors);
+    if (nColors) this.colorizeBoard(nColors);
   }
 
   build() {
@@ -23,8 +23,15 @@ class Board {
     }
   }
 
-  colorize(n) {
-    this.fillSquares((above, before) => this.randomColor(n).except([above, before]));
+  colorizeBoard(n) {
+    this.fillSquares(({ x, y }, above, before) => {
+      const exemptedColors = [above, before];
+      const isBottomLeft = y === this.size.h - 1 && x === 0;
+      const topRightCoords = { x: this.size.w - 1, y: 0 };
+      const topRight = this.square(topRightCoords);
+      if (isBottomLeft) exemptedColors.push(topRight);
+      return this.randomColor(n).except(exemptedColors);
+    });
   }
 
   fillSquares(assigner) {
@@ -35,14 +42,16 @@ class Board {
       const squaresTotal = row.length;
 
       for (let squareIndex = 0; squareIndex < squaresTotal; squareIndex++) {
-        const above = this.square(squareIndex, rowIndex - 1);
-        const before = this.square(squareIndex - 1, rowIndex);
-        this.colorTable[rowIndex][squareIndex] = assigner(above, before);
+        const aboveCoords = { x: squareIndex, y: rowIndex - 1 };
+        const beforeCoords = { x: squareIndex - 1, y: rowIndex };
+        const above = this.square(aboveCoords);
+        const before = this.square(beforeCoords);
+        this.colorTable[rowIndex][squareIndex] = assigner({ x: squareIndex, y: rowIndex }, above, before);
       }
     }
   }
 
-  square(x, y) {
+  square({ x, y }) {
     const row = this.colorTable[y];
     if (row) return row[x];
 
@@ -69,5 +78,6 @@ module.exports = generateBoard = ({ size, nColors }) => {
   return {
     table: new Board(size, nColors).colorTable,
     size,
+    nColors,
   };
 };
