@@ -44,13 +44,14 @@ function find(checker, count) {
 function createGame(config, cookie) {
   const board = generateBoard(config.board);
   const host = createPlayer(cookie);
+  const ghostChallenger = createPlayer({ color: topRight(board) });
   host.color = bottomLeft(board);
   console.log(host.color);
 
   const game = {
     id: idGen.create(5),
     host,
-    challenger: undefined,
+    challenger: ghostChallenger,
     board,
     turn: undefined,
   };
@@ -75,7 +76,7 @@ function createPlayer(cookie) {
   return {
     id: cookie.id,
     username: cookie.username,
-    color: undefined,
+    color: cookie.color,
   };
 }
 
