@@ -5,6 +5,7 @@ const path = require('path');
 const idGen = require('./server/common/id');
 const { unpack, pack } = require('./server/packer');
 const cc = require('./server/color-color');
+const { roles } = require('./server/color-color');
 
 const app = express();
 
@@ -26,13 +27,14 @@ app.use((req, res, next) => {
   res.locals.cookie = {};
   cookieList.forEach((item) => {
     const [key, value] = item.split('=');
-    res.locals.cookie[key] = value;
+    res.locals.cookie[key] = unpack(value);
   });
 
   res.locals.setCookie = (entries) => {
-    Object.entries(entries).forEach(([name, value]) => {
+    Object.entries(entries).forEach(([name, rawValue]) => {
+      const value = pack(rawValue);
       res.locals.cookie[name] = value;
-      res.cookie(name, value, { maxAge: 9000000000 });
+      res.cookie(name, value, { maxAge: 9000000000, encode: String });
     });
   };
   next();
@@ -60,8 +62,8 @@ function client(command, action) {
 }
 
 client('index', ({ data, cookie }) => {
-  // const game = cc.getGameOf(cookie);
-  const game = cc.createGame(data, cookie);
+  const game = cc.getGameOf(cookie);
+  // const game = cc.createGame(data, cookie);
   return game;
 });
 
@@ -73,6 +75,11 @@ client('create-game', ({ data, cookie }) => {
   const game = cc.createGame(data, cookie);
 
   return game;
+});
+
+client('quit-game', ({ cookie }) => {
+  cc.destroyGame(cookie); // Bad implementation. put role checking here
+  return true;
 });
 
 client('join', ({ gameId, cookie }) => {

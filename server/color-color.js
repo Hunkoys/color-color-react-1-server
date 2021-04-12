@@ -24,7 +24,17 @@ function bottomLeft(board) {
   return board.table[board.size.h - 1][0];
 }
 
-const roles = ['host', 'challenge', 'spectator'];
+const roles = {
+  host: {
+    toString: () => 'host',
+  },
+  challenger: {
+    toString: () => 'challenger',
+  },
+  spectator: {
+    toString: () => 'spectator',
+  },
+};
 
 const games = 'games';
 db.create(games);
@@ -62,9 +72,9 @@ function createGame(config, cookie) {
 }
 
 function joinGame(gameId, cookie) {
-  const game = cc.getGame(gameId);
+  const game = getGame(gameId);
   if (game) {
-    const challenger = cc.createPlayer(cookie);
+    const challenger = createPlayer(cookie);
     challenger.color = topRight(game.board);
     game.challenger = challenger;
     game.turn = challenger;
@@ -72,10 +82,22 @@ function joinGame(gameId, cookie) {
   } else return;
 }
 
+function destroyGame(cookie) {
+  const { game, role } = getGameVerbose(cookie);
+  if (role === roles.host) {
+    // tell challenger that host quit
+    remove(game);
+  } else if (role === roles.challenger) {
+    // Leave the game open
+  }
+}
+
 function createPlayer(cookie) {
+  console.log(cookie.face);
   return {
     id: cookie.id,
     username: cookie.username,
+    faceName: cookie.faceName,
     color: cookie.color,
   };
 }
@@ -83,9 +105,9 @@ function createPlayer(cookie) {
 function getGameVerbose(cookie) {
   let role;
   const results = find((game) => {
-    return roles.some((roleName) => {
+    return Object.keys(roles).some((roleName) => {
       if (game[roleName] && game[roleName].id === cookie.id) {
-        role = roleName;
+        role = roles[roleName];
         return true;
       } else return false;
     });
@@ -115,18 +137,20 @@ function getGame(gameId) {
 
 function getGameOf(cookie) {
   const results = find((game) => {
-    return roles.some((roleName) => game[roleName] && game[roleName].id === cookie.id);
+    return Object.keys(roles).some((roleName) => game[roleName] && game[roleName].id === cookie.id);
   });
 
   return results.length > 0 ? results[0] : undefined;
 }
 
 module.exports = {
+  roles,
   get games() {
     return db.get(games);
   },
   createGame,
   joinGame,
+  destroyGame,
   createPlayer,
   role,
   inGame,

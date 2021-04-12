@@ -4,5 +4,7 @@ module.exports.pack = (contents) => {
 };
 
 module.exports.unpack = (packet) => {
-  return packet.contents;
+  const contents =
+    packet instanceof String || typeof packet === 'string' ? JSON.parse(packet).contents : packet.contents;
+  return contents;
 };
