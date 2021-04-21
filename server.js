@@ -65,6 +65,7 @@ io.on('connection', (socket) => {
       const game = cc.getGameOf({ id });
       const room = game.id;
       socket.join(room);
+      socket.to(room).emit('player-joined', game);
 
       socket.on('move', (move) => {
         const [player, type, data] = unpack(move);
