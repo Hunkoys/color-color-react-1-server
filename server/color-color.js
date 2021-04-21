@@ -106,7 +106,7 @@ function getGameVerbose(cookie) {
   let role;
   const results = find((game) => {
     return Object.keys(roles).some((roleName) => {
-      if (game[roleName] && game[roleName].id === cookie.id) {
+      if (game[roleName] && game[roleName].id == cookie.id) {
         role = roles[roleName];
         return true;
       } else return false;
@@ -130,17 +130,29 @@ function inGame(cookie) {
 }
 
 function getGame(gameId) {
-  const results = find((game) => game.id === gameId);
+  const results = find((game) => game.id == gameId);
 
   return results.length > 0 ? results[0] : undefined;
 }
 
 function getGameOf(cookie) {
   const results = find((game) => {
-    return Object.keys(roles).some((roleName) => game[roleName] && game[roleName].id === cookie.id);
+    return Object.keys(roles).some((roleName) => game[roleName] && game[roleName].id == cookie.id);
   });
 
   return results.length > 0 ? results[0] : undefined;
+}
+
+function getOpenGames() {
+  console.log('yo');
+  return find((game) => {
+    console.log(game);
+    return game.challenger.id === undefined;
+  });
+}
+
+function showGames() {
+  console.log(find(() => true, -1));
 }
 
 module.exports = {
@@ -156,4 +168,6 @@ module.exports = {
   inGame,
   getGame,
   getGameOf,
+  getOpenGames,
+  showGames,
 };

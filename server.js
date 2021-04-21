@@ -1,5 +1,6 @@
 const express = require('express');
-const socket = require('socket.io')();
+const http = require('http');
+const socketio = require('socket.io');
 const bodyParser = require('body-parser');
 const path = require('path');
 const idGen = require('./server/common/id');
@@ -8,6 +9,12 @@ const cc = require('./server/color-color');
 const { roles } = require('./server/color-color');
 
 const app = express();
+const server = http.createServer(app);
+const io = socketio(server, {
+  cors: {
+    origin: 'http://localhost:3000',
+  },
+});
 
 const publicPath = path.join(__dirname, '../client/build');
 
@@ -42,11 +49,41 @@ app.use((req, res, next) => {
 
 app.use(express.static(publicPath));
 
+// io.use((socket, next) => {
+//   const username = socket.handshake.auth.username;
+//   if (!username) {
+//     return next(new Error("invalid username"));
+//   }
+//   socket.username = username;
+//   next();
+// });
+
+io.on('connection', (socket) => {
+  socket.emit('whats your id');
+  socket.on('give id', (id) => {
+    if (id) {
+      const game = cc.getGameOf({ id });
+      const room = game.id;
+      socket.join(room);
+
+      socket.on('move', (move) => {
+        const [player, type, data] = unpack(move);
+        console.log('player', player);
+        cc.showGames();
+        const game = cc.getGameOf(player);
+
+        if (player.id == game.turn.id) {
+          game.turn = player.id == game.host.id ? game.challenger : game.host;
+          socket.to(room).emit('move', move);
+        }
+      });
+    }
+  });
+});
+
 app.get('/', function (req, res) {
   const playerId = res.locals.cookie.playerId;
-  if (playerId === undefined)
-    res.cookie('playerId', Math.random().toString().substr(2, 6), { maxAge: 10800, httpOnly: false });
-  console.log(playerId);
+  if (playerId === undefined) res.cookie('playerId', idGen.create(6), { maxAge: 10800, httpOnly: false });
   res.sendFile(path.join(publicPath, 'index.html'));
 });
 
@@ -82,8 +119,12 @@ client('quit-game', ({ cookie }) => {
   return true;
 });
 
-client('join', ({ gameId, cookie }) => {
-  return cc.joinGame(gameId, cookie);
+client('join-game', ({ data, cookie }) => {
+  return cc.joinGame(data, cookie);
 });
 
-app.listen(2500);
+client('get-open-games', () => {
+  return cc.getOpenGames();
+});
+
+server.listen(2500);
