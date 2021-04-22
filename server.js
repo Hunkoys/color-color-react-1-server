@@ -69,12 +69,12 @@ io.on('connection', (socket) => {
 
       socket.on('move', (move) => {
         const [player, type, data] = unpack(move);
-        console.log('player', player);
+        console.log('player', `${id} === ${player.id}`);
         cc.showGames();
         const game = cc.getGameOf(player);
 
         if (player.id == game.turn.id) {
-          game.turn = player.id == game.host.id ? game.challenger : game.host;
+          if (type === 'confirm') game.turn = player.id == game.host.id ? game.challenger : game.host;
           socket.to(room).emit('move', move);
         }
       });
