@@ -17,11 +17,28 @@ const generateBoard = require('./color-color/Board');
 // };
 
 function topRight(board) {
-  return board.table[0][board.size.w - 1];
+  const x = board.size.w - 1;
+  const y = 0;
+
+  const coords = [x, y];
+  const color = board.table[y][x];
+  return { coords, color };
 }
 
 function bottomLeft(board) {
-  return board.table[board.size.h - 1][0];
+  const x = 0;
+  const y = board.size.h - 1;
+
+  const coords = [x, y];
+  const color = board.table[y][x];
+  return { coords, color };
+}
+
+function initialSquare(square) {
+  return {
+    all: [square],
+    edges: [square],
+  };
 }
 
 const roles = {
@@ -53,9 +70,15 @@ function find(checker, count) {
 
 function createGame(config, cookie) {
   const board = generateBoard(config.board);
-  const host = createPlayer(cookie);
-  const ghostChallenger = createPlayer({ color: topRight(board) });
-  host.color = bottomLeft(board);
+
+  const { color, coords } = bottomLeft(board);
+  const squares = initialSquare(coords);
+  const host = createPlayer({ ...cookie, color, squares });
+
+  const { ghostColor, ghostCoords } = topRight(board);
+  const ghostSquares = initialSquare(ghostCoords);
+  const ghostChallenger = createPlayer({ ghostColor, ghostSquares });
+
   console.log(host.color);
 
   const game = {
@@ -74,8 +97,9 @@ function createGame(config, cookie) {
 function joinGame(gameId, cookie) {
   const game = getGame(gameId);
   if (game) {
-    const challenger = createPlayer(cookie);
-    challenger.color = topRight(game.board);
+    const { color, coords } = topRight(game.board);
+    const squares = initialSquare(coords);
+    const challenger = createPlayer({ ...cookie, color, squares });
     game.challenger = challenger;
     game.turn = challenger;
     return game;
@@ -99,6 +123,7 @@ function createPlayer(cookie) {
     username: cookie.username,
     faceName: cookie.faceName,
     color: cookie.color,
+    squares: cookie.squares,
   };
 }
 

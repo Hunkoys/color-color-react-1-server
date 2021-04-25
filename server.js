@@ -63,6 +63,8 @@ io.on('connection', (socket) => {
   socket.on('give id', (id) => {
     if (id) {
       const game = cc.getGameOf({ id });
+      if (game === undefined) return; // Game not found. back to splash
+
       const room = game.id;
       socket.join(room);
       socket.to(room).emit('player-joined', game);
