@@ -16,6 +16,12 @@ const generateBoard = require('./color-color/Board');
 //   reconnect: () => {},
 // };
 
+const TOP = [0, -1];
+const RIGHT = [1, 0];
+const BOTTOM = [0, 1];
+const LEFT = [-1, 0];
+const CROSS = [TOP, RIGHT, BOTTOM, LEFT];
+
 function topRight(board) {
   const x = board.size.w - 1;
   const y = 0;
@@ -43,7 +49,7 @@ function initialSquare(square) {
 
 const roles = {
   host: {
-    toString: () => 'host',
+    toString: () => 'host', // Bad Idea for apps running in different memories
   },
   challenger: {
     toString: () => 'challenger',
@@ -180,6 +186,46 @@ function showGames() {
   console.log(find(() => true, -1));
 }
 
+function consume(player, range) {
+  const game = getGameOf(player);
+
+  const enemy = is(player, game.host) ? game.challenger : game.host;
+  const mySquares = player.squares.all;
+  const enemySquares = enemy.squares.all;
+
+  function isFree(square) {
+    const notIn = (list) => !logic.searchIn(list, square);
+    return notIn(mySquares) || notIn(enemySquares);
+  }
+
+  function getColor(square, offset) {
+    return logic.getColor(game.board, square, offset);
+  }
+
+  function collectSquare(square) {
+    mySquares.push(square);
+  }
+
+  const edges = player.squares.edges;
+
+  const newEdges = edges.filter((edge) => {
+    let isEdge = false;
+
+    CROSS.forEach((side) => {
+      if (isFree(side)) {
+        const myColor = getColor(edge);
+        const color = getColor(edge, side);
+        if (color === myColor) collectSquare(side);
+        else isEdge = true;
+      }
+    });
+
+    return isEdge;
+  });
+
+  return game;
+}
+
 module.exports = {
   roles,
   get games() {
@@ -195,4 +241,5 @@ module.exports = {
   getGameOf,
   getOpenGames,
   showGames,
+  consume,
 };

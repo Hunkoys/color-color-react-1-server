@@ -71,16 +71,103 @@ io.on('connection', (socket) => {
 
       socket.on('move', (move) => {
         const [player, type, data] = unpack(move);
-        console.log('player', `${id} === ${player.id}`);
-        cc.showGames();
+        const CROSS = [
+          [0, -1],
+          [1, 0],
+          [0, 1],
+          [-1, 0],
+        ];
+
         const game = cc.getGameOf(player);
 
         if (player.id == game.turn.id) {
-          if (type === 'confirm') game.turn = player.id == game.host.id ? game.challenger : game.host;
+          if (type === 'confirm') {
+            const [color] = data;
+
+            colorize(player, color);
+
+            consume(player, 1);
+
+            game.turn = player.id == game.host.id ? game.challenger : game.host;
+            // console.log(game.board.table);
+          }
+
           socket.to(room).emit('move', move);
         }
+
+        function colorize(player, color) {
+          const me = is(player, game.host) ? game.host : game.challenger;
+          me.color = color;
+
+          me.squares.all.forEach(([x, y]) => {
+            const row = game.board.table[y];
+            if (row != undefined) row[x] = color;
+          });
+        }
+
+        function consume(player, range) {
+          const [me, enemy] = is(player, game.host) ? [game.host, game.challenger] : [game.challenger, game.host];
+          const mySquares = me.squares.all;
+          const enemySquares = enemy.squares.all;
+          const pending = [];
+
+          const edges = me.squares.edges;
+
+          const newEdges = edges.filter((edge) => {
+            let isEdge = false;
+
+            CROSS.forEach((offset) => {
+              const side = getRelativeSquare(edge, offset);
+              const color = getColor(side);
+
+              if (color === undefined) return;
+              if (isFree(side)) {
+                const myColor = getColor(edge);
+                if (color === myColor) collectSquare(side);
+                else isEdge = true;
+              }
+            });
+
+            return isEdge;
+          });
+
+          pending.forEach((square) => {
+            const isEdge = CROSS.some((offset) => {
+              const side = getRelativeSquare(square, offset);
+              const color = getColor(side);
+              if (color != undefined && isFree(side)) return true;
+              else return false;
+            });
+
+            if (isEdge) newEdges.push(square);
+          });
+
+          me.squares.edges = newEdges;
+
+          function collectSquare(square) {
+            mySquares.push(square);
+            pending.push(square);
+          }
+
+          function isFree(square) {
+            function notIn(list) {
+              return !list.some((inQuestion) => square[0] === inQuestion[0] && square[1] === inQuestion[1]);
+            }
+
+            return notIn(mySquares) && notIn(enemySquares);
+          }
+
+          function getColor([x, y]) {
+            const row = game.board.table[y];
+            return row ? row[x] : undefined;
+          }
+
+          function getRelativeSquare(coords, offset) {
+            return [coords[0] + offset[0], coords[1] + offset[1]];
+          }
+        }
       });
-    }
+    } else console.log('Player Doesnt have ID');
   });
 });
 
@@ -89,6 +176,10 @@ app.get('/', function (req, res) {
   if (playerId === undefined) res.cookie('playerId', idGen.create(6), { maxAge: 10800, httpOnly: false });
   res.sendFile(path.join(publicPath, 'index.html'));
 });
+
+function is(obj1, obj2) {
+  return obj1.id == obj2.id;
+}
 
 function client(command, action) {
   app.post(`/color-color/${command}`, (req, res, next) => {
