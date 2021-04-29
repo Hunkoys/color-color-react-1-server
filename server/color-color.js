@@ -85,8 +85,6 @@ function createGame(config, cookie) {
   const ghostSquares = initialSquare(ghostCoords);
   const ghostChallenger = createPlayer({ ghostColor, ghostSquares });
 
-  console.log(host.color);
-
   const game = {
     id: idGen.create(5),
     host,
@@ -123,7 +121,6 @@ function destroyGame(cookie) {
 }
 
 function createPlayer(cookie) {
-  console.log(cookie.face);
   return {
     id: cookie.id,
     username: cookie.username,
@@ -175,9 +172,7 @@ function getGameOf(cookie) {
 }
 
 function getOpenGames() {
-  console.log('yo');
   return find((game) => {
-    console.log(game);
     return game.challenger.id === undefined;
   });
 }
