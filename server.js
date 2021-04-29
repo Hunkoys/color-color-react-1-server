@@ -84,8 +84,9 @@ io.on('connection', (socket) => {
         ];
 
         const game = cc.getGameOf(player);
+        if (game == undefined) return;
 
-        if (player.id == game.turn.id) {
+        if (game.turn && player.id == game.turn.id) {
           if (type === 'confirm') {
             const [color] = data;
 
