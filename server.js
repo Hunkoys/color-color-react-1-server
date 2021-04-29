@@ -172,8 +172,8 @@ io.on('connection', (socket) => {
 });
 
 app.get('/', function (req, res) {
-  const playerId = res.locals.cookie.playerId;
-  if (playerId === undefined) res.cookie('playerId', idGen.create(6), { maxAge: 10800, httpOnly: false });
+  // const playerId = res.locals.cookie.playerId;
+  // if (playerId === undefined) res.cookie('playerId', idGen.create(6), { maxAge: 10800, httpOnly: false });
   res.sendFile(path.join(publicPath, 'index.html'));
 });
 
