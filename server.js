@@ -94,6 +94,8 @@ io.on('connection', (socket) => {
 
             consume(player, 1);
 
+            updateScore();
+
             game.turn = player.id == game.host.id ? game.challenger : game.host;
             // console.log(game.board.table);
           }
@@ -171,6 +173,11 @@ io.on('connection', (socket) => {
           function getRelativeSquare(coords, offset) {
             return [coords[0] + offset[0], coords[1] + offset[1]];
           }
+        }
+
+        function updateScore() {
+          game.host.score = game.host.squares.all.length;
+          game.challenger.score = game.challenger.squares.all.length;
         }
       });
     } else console.log('Player Doesnt have ID');

@@ -128,6 +128,7 @@ function createPlayer(cookie) {
     faceName: cookie.faceName,
     color: cookie.color,
     squares: cookie.squares,
+    score: cookie.squares ? cookie.squares.all.length : 0,
   };
 }
 
