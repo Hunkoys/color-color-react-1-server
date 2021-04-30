@@ -81,9 +81,10 @@ function createGame(config, cookie) {
   const squares = initialSquare(coords);
   const host = createPlayer({ ...cookie, color, squares });
 
-  const { ghostColor, ghostCoords } = topRight(board);
+  const { color: ghostColor, squares: ghostCoords } = topRight(board);
+  console.log(ghostColor, ghostCoords);
   const ghostSquares = initialSquare(ghostCoords);
-  const ghostChallenger = createPlayer({ ghostColor, ghostSquares });
+  const ghostChallenger = createPlayer({ color: ghostColor, squares: ghostSquares });
 
   const game = {
     id: idGen.create(5),
