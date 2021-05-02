@@ -12,7 +12,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio(server, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: 'http://192.168.0.189:3000',
   },
 });
 
@@ -60,12 +60,16 @@ app.use(express.static(publicPath));
 
 io.on('connection', (socket) => {
   console.log('Someone connected');
+
   socket.emit('whats your id');
+
   socket.on('give id', (id) => {
     socket.on('disconnect', () => {
       console.log(`${id} has disconnected`);
     });
+
     console.log('THey gave us thier ID', id);
+
     if (id) {
       const game = cc.getGameOf({ id });
       if (game === undefined) return; // Game not found. back to splash
@@ -179,6 +183,10 @@ io.on('connection', (socket) => {
           game.host.score = game.host.squares.all.length;
           game.challenger.score = game.challenger.squares.all.length;
         }
+      });
+
+      socket.on('quit', () => {
+        socket.to(room).emit('enemy-quit');
       });
     } else console.log('Player Doesnt have ID');
   });

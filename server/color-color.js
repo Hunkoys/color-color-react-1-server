@@ -112,13 +112,8 @@ function joinGame(gameId, cookie) {
 }
 
 function destroyGame(cookie) {
-  const { game, role } = getGameVerbose(cookie);
-  if (role === roles.host) {
-    // tell challenger that host quit
-    remove(game);
-  } else if (role === roles.challenger) {
-    // Leave the game open
-  }
+  const game = getGameOf(cookie);
+  remove(game);
 }
 
 function createPlayer(cookie) {
