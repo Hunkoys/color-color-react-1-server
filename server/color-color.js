@@ -93,6 +93,7 @@ function createGame(config, cookie) {
     board,
     turn: undefined,
     waitingForOpponent: true,
+    gameOver: false,
   };
 
   add(game);
@@ -125,6 +126,7 @@ function createPlayer(cookie) {
     color: cookie.color,
     squares: cookie.squares,
     score: cookie.squares ? cookie.squares.all.length : 0,
+    requestedRematch: false,
   };
 }
 

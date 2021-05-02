@@ -71,7 +71,7 @@ io.on('connection', (socket) => {
     console.log('THey gave us thier ID', id);
 
     if (id) {
-      const game = cc.getGameOf({ id });
+      let game = cc.getGameOf({ id });
       if (game === undefined) return; // Game not found. back to splash
 
       const room = game.id;
@@ -98,7 +98,7 @@ io.on('connection', (socket) => {
 
             consume(player, 1);
 
-            updateScore();
+            tallyScore();
 
             game.turn = player.id == game.host.id ? game.challenger : game.host;
             // console.log(game.board.table);
@@ -179,14 +179,45 @@ io.on('connection', (socket) => {
           }
         }
 
-        function updateScore() {
+        function tallyScore() {
           game.host.score = game.host.squares.all.length;
           game.challenger.score = game.challenger.squares.all.length;
+
+          const nOfSquares = game.board.size.w * game.board.size.h;
+          const totalScore = game.host.score + game.challenger.score;
+          if (totalScore === nOfSquares) {
+            game.gameOver = true;
+          }
         }
       });
 
       socket.on('quit', () => {
         socket.to(room).emit('enemy-quit');
+      });
+
+      socket.on('request-rematch', () => {
+        const game = cc.getGameOf({ id });
+
+        if (game == undefined) {
+          socket.emit('enemy-quit');
+        }
+        const role = cc.role({ id });
+
+        game[role].requestedRematch = true;
+
+        console.log('game role: ', game[role]);
+        if (game.host.requestedRematch && game.challenger.requestedRematch) {
+          const oldGame = game;
+          cc.destroyGame(game);
+          const newGame = cc.createGame(oldGame, oldGame.host);
+          newGame.id = game.id;
+          cc.joinGame(newGame.id, oldGame.challenger);
+
+          console.log('old game: ', game);
+          console.log('new game: ', newGame);
+
+          io.in(room).emit('rematch-granted', newGame);
+        }
       });
     } else console.log('Player Doesnt have ID');
   });
@@ -220,9 +251,9 @@ client('index', ({ data, cookie }) => {
 });
 
 client('create-game', ({ data, cookie }) => {
-  if (cc.inGame(cookie)) {
-    return;
-  }
+  const existingGame = cc.getGameOf(cookie);
+
+  if (existingGame) return;
 
   const game = cc.createGame(data, cookie);
 
