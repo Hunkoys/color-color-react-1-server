@@ -230,7 +230,8 @@ client('create-game', ({ data, cookie }) => {
 });
 
 client('quit-game', ({ cookie }) => {
-  cc.destroyGame(cookie); // Bad implementation. put role checking here
+  const game = cc.getGameOf(cookie);
+  if (game) cc.destroyGame(game);
   return true;
 });
 

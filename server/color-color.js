@@ -113,8 +113,7 @@ function joinGame(gameId, cookie) {
   } else return;
 }
 
-function destroyGame(cookie) {
-  const game = getGameOf(cookie);
+function destroyGame(game) {
   remove(game);
 }
 
