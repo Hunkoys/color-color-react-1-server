@@ -92,6 +92,7 @@ function createGame(config, cookie) {
     challenger: ghostChallenger,
     board,
     turn: undefined,
+    waitingForOpponent: true,
   };
 
   add(game);
@@ -107,6 +108,7 @@ function joinGame(gameId, cookie) {
     const challenger = createPlayer({ ...cookie, color, squares });
     game.challenger = challenger;
     game.turn = challenger;
+    game.waitingForOpponent = false;
     return game;
   } else return;
 }
