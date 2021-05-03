@@ -219,6 +219,17 @@ io.on('connection', (socket) => {
           io.in(room).emit('rematch-granted', newGame);
         }
       });
+
+      socket.on('give-up', () => {
+        const game = cc.getGameOf({ id });
+
+        if (game == undefined) {
+          socket.emit('enemy-quit');
+        }
+        const role = cc.role({ id });
+        game[role].requestedRematch = true;
+        socket.to(room).emit('enemy-give-up');
+      });
     } else console.log('Player Doesnt have ID');
   });
 });
