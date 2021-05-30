@@ -1,5 +1,5 @@
 const express = require('express');
-const http = require('http');
+const https = require('https');
 const socketio = require('socket.io');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -7,9 +7,25 @@ const idGen = require('./server/common/id');
 const { unpack, pack } = require('./server/packer');
 const cc = require('./server/color-color');
 const { roles } = require('./server/color-color');
+const fs = require('fs');
+
+const DEV = process.env.RUN_MODE === 'development';
+const SSL_PATH = '/etc/letsencrypt/live/www.dominicvictoria.com';
+const PORT = DEV ? 2500 : 443;
 
 const app = express();
-const server = http.createServer(app);
+const serverParams = [app];
+
+if (!DEV) {
+  const ssl = {
+    key: fs.readFileSync(SSL_PATH + '/privkey.pem'),
+    cert: fs.readFileSync(SSL_PATH + '/fullchain.pem'),
+  };
+
+  serverParams.unshift(ssl);
+}
+
+const server = https.createServer(...serverParams);
 const io = socketio(server, {
   cors: {
     origin: 'http://192.168.0.189:3000',
@@ -285,4 +301,4 @@ client('get-open-games', () => {
   return cc.getOpenGames();
 });
 
-server.listen(2500);
+server.listen(PORT, console.log(`running on port ${PORT}`));
