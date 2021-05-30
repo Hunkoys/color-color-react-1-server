@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const https = require('https');
+const forceSSL = require('express-force-ssl');
 const socketio = require('socket.io');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -14,10 +15,11 @@ const app = express();
 
 const DEVELOPMENT = process.env.NODE_ENV === 'development';
 
-const PORT = DEVELOPMENT ? 2500 : 443;
+const PORT = DEVELOPMENT ? 2500 : 80;
 
-const server = DEVELOPMENT
-  ? http.createServer(app)
+const server = http.createServer(app);
+const serverX = DEVELOPMENT
+  ? null
   : https.createServer(
       {
         key: fs.readFileSync('/etc/letsencrypt/live/www.dominicvictoria.com/privkey.pem'),
@@ -34,6 +36,7 @@ const io = socketio(server, {
 
 const publicPath = path.join(__dirname, '../client/build');
 
+if (serverX) app.use(forceSSL);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use((req, res, next) => {
@@ -291,3 +294,4 @@ client('get-open-games', () => {
 });
 
 server.listen(PORT, () => console.log(`serving on port ${PORT}`));
+if (serverX) serverX.listen(443);
