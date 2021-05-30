@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const https = require('https');
 const socketio = require('socket.io');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -7,9 +8,24 @@ const idGen = require('./server/common/id');
 const { unpack, pack } = require('./server/packer');
 const cc = require('./server/color-color');
 const { roles } = require('./server/color-color');
+const fs = require('fs');
 
 const app = express();
-const server = http.createServer(app);
+
+const DEVELOPMENT = process.env.NODE_ENV === 'development';
+
+const PORT = DEVELOPMENT ? 2500 : 443;
+
+const server = DEVELOPMENT
+  ? http.createServer(app)
+  : https.createServer(
+      {
+        key: fs.readFileSync('/etc/letsencrypt/live/www.dominicvictoria.com/privkey.pem'),
+        cert: fs.readFileSync('/etc/letsencrypt/live/www.dominicvictoria.com/fullchain.pem'),
+      },
+      app
+    );
+
 const io = socketio(server, {
   cors: {
     origin: 'http://192.168.0.189:3000',
@@ -285,4 +301,4 @@ client('get-open-games', () => {
   return cc.getOpenGames();
 });
 
-server.listen(2500);
+server.listen(PORT, () => console.log(`serving on port ${PORT}`));
