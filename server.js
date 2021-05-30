@@ -10,10 +10,6 @@ const cc = require('./server/color-color');
 const { roles } = require('./server/color-color');
 const fs = require('fs');
 
-const DEV = process.env.RUN_MODE === 'development';
-const SSL_PATH = '/etc/letsencrypt/live/www.dominicvictoria.com';
-const PORT = DEV ? 2500 : 443;
-
 const app = express();
 
 const DEVELOPMENT = process.env.NODE_ENV === 'development';
