@@ -75,17 +75,9 @@ app.use(express.static(publicPath));
 // });
 
 io.on('connection', (socket) => {
-  console.log('Someone connected');
-
   socket.emit('whats your id');
 
   socket.on('give id', (id) => {
-    socket.on('disconnect', () => {
-      console.log(`${id} has disconnected`);
-    });
-
-    console.log('THey gave us thier ID', id);
-
     if (id) {
       let game = cc.getGameOf({ id });
       if (game === undefined) return; // Game not found. back to splash
@@ -117,7 +109,6 @@ io.on('connection', (socket) => {
             tallyScore();
 
             game.turn = player.id == game.host.id ? game.challenger : game.host;
-            // console.log(game.board.table);
           }
 
           socket.to(room).emit('move', move);
@@ -221,16 +212,12 @@ io.on('connection', (socket) => {
 
         game[role].requestedRematch = true;
 
-        console.log('game role: ', game[role]);
         if (game.host.requestedRematch && game.challenger.requestedRematch) {
           const oldGame = game;
           cc.destroyGame(game);
           const newGame = cc.createGame(oldGame, oldGame.host);
           newGame.id = game.id;
           cc.joinGame(newGame.id, oldGame.challenger);
-
-          console.log('old game: ', game);
-          console.log('new game: ', newGame);
 
           io.in(room).emit('rematch-granted', newGame);
         }
