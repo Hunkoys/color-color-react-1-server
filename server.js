@@ -220,19 +220,21 @@ io.on('connection', (socket) => {
           cc.joinGame(newGame.id, oldGame.challenger);
 
           io.in(room).emit('rematch-granted', newGame);
+        } else {
+          socket.to(room).emit('rematch-requested');
         }
       });
 
-      socket.on('give-up', () => {
-        const game = cc.getGameOf({ id });
+      // socket.on('rematch', () => {
+      //   const game = cc.getGameOf({ id });
 
-        if (game == undefined) {
-          socket.emit('enemy-quit');
-        }
-        const role = cc.role({ id });
-        game[role].requestedRematch = true;
-        socket.to(room).emit('enemy-give-up');
-      });
+      //   if (game == undefined) {
+      //     socket.emit('enemy-quit');
+      //   }
+      //   const role = cc.role({ id });
+      //   game[role].requestedRematch = true;
+      //   socket.to(room).emit('rematch');
+      // });
     } else console.log('Player Doesnt have ID');
   });
 });
